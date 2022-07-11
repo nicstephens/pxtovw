@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-def rewrite_css(filepath: str, viewportpx: int, vw, output_filepath: str):
+def rewrite_css(filepath: str, viewportpx: tuple, vw, output_filepath: str):
 
     with open(filepath) as f:
         lines = f.read()
@@ -20,19 +20,30 @@ def rewrite_css(filepath: str, viewportpx: int, vw, output_filepath: str):
         value = line[-1]
         values.append(value)
 
+    print (values)
 
-    newvalues = []   
-    for value in values:
-        if value.endswith('px'):
-            partstring = value.partition("px")
-            if vw == True:
+
+    newvalues = []  
+
+    if vw == 'vw': 
+        for value in values:
+            if value.endswith(vw):
+                partstring = value.partition(vw)
                 newvwvalue = str(round((float(partstring[0])/viewportpx)*100, 3))
                 newvalues.append(str(newvwvalue + 'vw'))
-            elif vw == False:
+            else:
+                newvalues.append(value)
+            
+    
+    
+    elif vw == 'vh':
+        for value in values:
+            if value.endswith(vw):
+                partstring = value.partition(vw)
                 newvhvalue = str(round((float(partstring[0])/viewportpx)*100, 3))
                 newvalues.append(str(newvhvalue + 'vh'))
-        else:
-            newvalues.append(value)
+            else:
+                newvalues.append(value)
 
     df = pd.DataFrame(np.array(itemlist))
     df['newvals'] = newvalues
@@ -48,10 +59,74 @@ def rewrite_css(filepath: str, viewportpx: int, vw, output_filepath: str):
     with open(output_filepath, "w") as f:
         f.write(output_string)
 
+def get_numbers(x: str):
+    
+    y = ''
+    for i in list(x):
+        if i.isdecimal() or i.isnumeric() or i == ".":
+            y += i
+        
+    return y
 
 
+    
+
+def replace_css(filepath: str, viewportpx: tuple, target_unit: str, output_filepath: str):
+
+    with open(filepath) as f:
+        lines = f.read()
+        lines = lines.split(" ")
+    
+    print (lines)
+    if target_unit == 'vh':
+        opp_lines = []
+        for i in lines:
+            if 'vw' in i:
+                x = i.split('vw')[0]
+                opp_lines.append(get_numbers(x))
+            else:
+                opp_lines.append('')
+
+    if target_unit == 'vw':
+        opp_lines = []
+        for i in lines:
+            if 'vh' in i:
+                x = i.split('vh')[0]
+                opp_lines.append(get_numbers(x))
+            else:
+                opp_lines.append('')
+    
+    num_lines = []
+
+    if target_unit == 'vh':
+        for i in opp_lines:
+            try:
+                num_lines.append((((float(i)/100)*viewportpx[0])/viewportpx[1])*100)
+            except:
+                num_lines.append('')
+
+    if target_unit == 'vw':
+        for i in opp_lines:
+            try:
+                num_lines.append((((float(i)/100)*viewportpx[1])/viewportpx[0])*100)
+            except:
+                num_lines.append('')
+    
+    final_lines = []
+
+    for i in num_lines:
+        try:
+            final_lines.append(str(round(float(i), 2)))  
+        except:
+            final_lines.append('')
+            
+    print (final_lines)
+    
 
 
-#     Use the rewrite_css function like so
-#     rewrite_css(r"C:\Users\path\to\your\existingcss.css", 1720, True, r"C:\Users\path\to\your\newcss.css")
+    
+    # with open(output_filepath, "w") as f:
+    #     f.write(output_string)
 
+
+replace_css(r"C:\", (414,896),'vh', r"C:\")
